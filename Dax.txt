@@ -1,67 +1,86 @@
-TabelaHTML_Releases =
-VAR SemanaAtual =
-    WEEKNUM ( TODAY() )
-VAR Semana1 = SemanaAtual
-VAR Semana2 = SemanaAtual + 1
-VAR Semana3 = SemanaAtual + 2
+Tabela_HTML_Releases =
+VAR Semanas =
+    DISTINCT ( SELECTCOLUMNS ( Tabela_releases, "Semana", Tabela_releases[WeekNumber] ) )
 
-VAR Cabecalho =
-    "<thead style='background-color:#374151; color:#e5e7eb;'>
-        <tr>
-            <th rowspan='2' style='padding:8px; border:1px solid #4b5563;'>Market Name</th>
-            <th rowspan='2' style='padding:8px; border:1px solid #4b5563;'>Model / Type</th>
-            <th colspan='7' style='padding:8px; border:1px solid #4b5563;'>Semana " & Semana1 & "</th>
-            <th colspan='7' style='padding:8px; border:1px solid #4b5563;'>Semana " & Semana2 & "</th>
-            <th colspan='7' style='padding:8px; border:1px solid #4b5563;'>Semana " & Semana3 & "</th>
-        </tr>
-        <tr>
-            <th style='padding:4px;'>Seg</th>
-            <th style='padding:4px;'>Ter</th>
-            <th style='padding:4px;'>Qua</th>
-            <th style='padding:4px;'>Qui</th>
-            <th style='padding:4px;'>Sex</th>
-            <th style='padding:4px;'>Sáb</th>
-            <th style='padding:4px;'>Dom</th>
-            <th style='padding:4px;'>Seg</th>
-            <th style='padding:4px;'>Ter</th>
-            <th style='padding:4px;'>Qua</th>
-            <th style='padding:4px;'>Qui</th>
-            <th style='padding:4px;'>Sex</th>
-            <th style='padding:4px;'>Sáb</th>
-            <th style='padding:4px;'>Dom</th>
-            <th style='padding:4px;'>Seg</th>
-            <th style='padding:4px;'>Ter</th>
-            <th style='padding:4px;'>Qua</th>
-            <th style='padding:4px;'>Qui</th>
-            <th style='padding:4px;'>Sex</th>
-            <th style='padding:4px;'>Sáb</th>
-            <th style='padding:4px;'>Dom</th>
-        </tr>
-    </thead>"
+VAR MinSemana = MINX ( Semanas, [Semana] )
+VAR MaxSemana = MaxX ( Semanas, [Semana] )
 
-VAR Linhas =
+VAR CabecalhoHTML =
+"
+<div style='background-color:#111827;color:#E5E7EB;padding:16px;font-family:Inter, sans-serif;'>
+    <h1 style='text-align:center;font-size:24px;font-weight:bold;color:white;'>📊 Matriz de Releases - BB x LA</h1>
+    <p style='text-align:center;font-size:16px;color:#22D3EE;font-weight:600;'>(W" & MinSemana & " a W" & MaxSemana & ")</p>
+    <div style='overflow-x:auto;background-color:#1F2937;border-radius:12px;'>
+        <table style='min-width:100%;border-collapse:collapse;text-align:center;font-size:12px;'>
+            <thead style='background-color:#374151;color:#9CA3AF;'>
+                <tr>
+                    <th rowspan='2' style='padding:8px;border:1px solid #4B5563;'>Market Name</th>
+                    <th rowspan='2' style='padding:8px;border:1px solid #4B5563;'>Model / Type</th>"
+
+& CONCATENATEX (
+        Semanas,
+        "<th colspan='7' style='padding:8px;border:1px solid #4B5563;'>Semana " & [Semana] & "</th>",
+        ""
+    )
+& "</tr><tr>
+        <th style='padding:6px;border:1px solid #4B5563;'>Seg</th>
+        <th style='padding:6px;border:1px solid #4B5563;'>Ter</th>
+        <th style='padding:6px;border:1px solid #4B5563;'>Qua</th>
+        <th style='padding:6px;border:1px solid #4B5563;'>Qui</th>
+        <th style='padding:6px;border:1px solid #4B5563;'>Sex</th>
+        <th style='padding:6px;border:1px solid #4B5563;'>Sáb</th>
+        <th style='padding:6px;border:1px solid #4B5563;'>Dom</th>
+        </tr>
+    </thead>
+    <tbody>
+"
+
+VAR LinhasHTML =
     CONCATENATEX (
-        SUMMARIZE ( 'Tabela', [MarketName], [Modelo], [Semana], [Dia], [Valor] ),
-        "<tr style='background-color:#1f2937;'>
-            <td style='padding:6px; border:1px solid #4b5563;'>" & [MarketName] & "</td>
-            <td style='padding:6px; border:1px solid #4b5563;'>" & [Modelo] & "</td>" &
+        SUMMARIZE (
+            Tabela_releases,
+            Tabela_releases[backbone_market_model_name],
+            Tabela_releases[backbone_plm_dev_model_name],
+            Tabela_releases[la_pim_dev_model_name],
+            Tabela_releases[la_market_model_name]
+        ),
+        VAR MarketName = [backbone_market_model_name]
+        VAR ModeloBB = [backbone_plm_dev_model_name]
+        VAR ModeloLA = [la_pim_dev_model_name]
+
+        VAR LinhaBB =
+            "<tr style='background-color:#1F2937;'>
+                <td rowspan='2' style='padding:8px;font-weight:bold;border:1px solid #374151;'>" & MarketName & "</td>
+                <td style='padding:8px;font-family:monospace;border:1px solid #374151;'>
+                    <span style='background-color:#2563EB;color:white;font-size:10px;font-weight:bold;padding:2px 6px;border-radius:12px;margin-right:6px;'>BB</span>"
+                    & ModeloBB & "</td>" &
             CONCATENATEX (
-                FILTER ( 'Tabela', [MarketName] = EARLIER ( [MarketName] ) && [Modelo] = EARLIER ( [Modelo] ) ),
-                "<td style='padding:6px; border:1px solid #4b5563;'>" & COALESCE ( [Valor], "" ) & "</td>",
-                "",
-                [Dia]
+                FILTER ( Tabela_releases, [backbone_plm_dev_model_name] = ModeloBB ),
+                "<td style='padding:6px;font-weight:bold;color:white;background-color:#2563EB;'>" & [backbone_ap_version] & "</td>",
+                ""
             )
-        & "</tr>",
+            & "</tr>"
+
+        VAR LinhaLA =
+            "<tr style='background-color:#1F2937;'>
+                <td style='padding:8px;font-family:monospace;border:1px solid #374151;'>
+                    <span style='background-color:#16A34A;color:white;font-size:10px;font-weight:bold;padding:2px 6px;border-radius:12px;margin-right:6px;'>LA</span>"
+                    & ModeloLA & "</td>" &
+            CONCATENATEX (
+                FILTER ( Tabela_releases, [la_pim_dev_model_name] = ModeloLA ),
+                "<td style='padding:6px;font-weight:bold;color:white;background-color:#16A34A;'>" & [la_ap_version] & "</td>",
+                ""
+            )
+            & "</tr>"
+
+        RETURN LinhaBB & LinhaLA,
         ""
     )
 
-VAR TabelaFinal =
-    "<div style='overflow-x:auto; background-color:#1f2937; border-radius:8px;'>
-        <table style='min-width:100%; border-collapse:collapse; font-family:Arial; font-size:12px; color:#e5e7eb; text-align:center;'>
-            " & Cabecalho & "
-            <tbody>" & Linhas & "</tbody>
-        </table>
-    </div>"
+VAR RodapeHTML =
+"</tbody></table></div>
+<p style='text-align:center;color:#9CA3AF;font-size:10px;margin-top:12px;'>Design adaptado para Power BI</p>
+</div>
+"
 
-RETURN
-TabelaFinal
+RETURN CabecalhoHTML & LinhasHTML & RodapeHTML
