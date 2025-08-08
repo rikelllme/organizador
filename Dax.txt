@@ -1,0 +1,67 @@
+TabelaHTML_Releases =
+VAR SemanaAtual =
+    WEEKNUM ( TODAY() )
+VAR Semana1 = SemanaAtual
+VAR Semana2 = SemanaAtual + 1
+VAR Semana3 = SemanaAtual + 2
+
+VAR Cabecalho =
+    "<thead style='background-color:#374151; color:#e5e7eb;'>
+        <tr>
+            <th rowspan='2' style='padding:8px; border:1px solid #4b5563;'>Market Name</th>
+            <th rowspan='2' style='padding:8px; border:1px solid #4b5563;'>Model / Type</th>
+            <th colspan='7' style='padding:8px; border:1px solid #4b5563;'>Semana " & Semana1 & "</th>
+            <th colspan='7' style='padding:8px; border:1px solid #4b5563;'>Semana " & Semana2 & "</th>
+            <th colspan='7' style='padding:8px; border:1px solid #4b5563;'>Semana " & Semana3 & "</th>
+        </tr>
+        <tr>
+            <th style='padding:4px;'>Seg</th>
+            <th style='padding:4px;'>Ter</th>
+            <th style='padding:4px;'>Qua</th>
+            <th style='padding:4px;'>Qui</th>
+            <th style='padding:4px;'>Sex</th>
+            <th style='padding:4px;'>Sáb</th>
+            <th style='padding:4px;'>Dom</th>
+            <th style='padding:4px;'>Seg</th>
+            <th style='padding:4px;'>Ter</th>
+            <th style='padding:4px;'>Qua</th>
+            <th style='padding:4px;'>Qui</th>
+            <th style='padding:4px;'>Sex</th>
+            <th style='padding:4px;'>Sáb</th>
+            <th style='padding:4px;'>Dom</th>
+            <th style='padding:4px;'>Seg</th>
+            <th style='padding:4px;'>Ter</th>
+            <th style='padding:4px;'>Qua</th>
+            <th style='padding:4px;'>Qui</th>
+            <th style='padding:4px;'>Sex</th>
+            <th style='padding:4px;'>Sáb</th>
+            <th style='padding:4px;'>Dom</th>
+        </tr>
+    </thead>"
+
+VAR Linhas =
+    CONCATENATEX (
+        SUMMARIZE ( 'Tabela', [MarketName], [Modelo], [Semana], [Dia], [Valor] ),
+        "<tr style='background-color:#1f2937;'>
+            <td style='padding:6px; border:1px solid #4b5563;'>" & [MarketName] & "</td>
+            <td style='padding:6px; border:1px solid #4b5563;'>" & [Modelo] & "</td>" &
+            CONCATENATEX (
+                FILTER ( 'Tabela', [MarketName] = EARLIER ( [MarketName] ) && [Modelo] = EARLIER ( [Modelo] ) ),
+                "<td style='padding:6px; border:1px solid #4b5563;'>" & COALESCE ( [Valor], "" ) & "</td>",
+                "",
+                [Dia]
+            )
+        & "</tr>",
+        ""
+    )
+
+VAR TabelaFinal =
+    "<div style='overflow-x:auto; background-color:#1f2937; border-radius:8px;'>
+        <table style='min-width:100%; border-collapse:collapse; font-family:Arial; font-size:12px; color:#e5e7eb; text-align:center;'>
+            " & Cabecalho & "
+            <tbody>" & Linhas & "</tbody>
+        </table>
+    </div>"
+
+RETURN
+TabelaFinal
