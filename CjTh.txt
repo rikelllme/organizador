@@ -1,0 +1,25 @@
+# app.py
+import streamlit as st
+from api_client import get_projetos
+from chatbot import create_llm, make_prompt
+
+st.set_page_config(page_title="Chat de Projetos", layout="wide")
+
+st.title("💬 Chat de Projetos com LLM")
+
+# Carrega dados da API
+projetos = get_projetos()
+
+if not projetos:
+    st.error("Não foi possível carregar dados da API.")
+else:
+    st.success(f"{len(projetos)} projetos carregados da API.")
+
+# Campo de pergunta
+user_question = st.text_input("Digite sua pergunta:")
+
+if st.button("Enviar") and user_question.strip():
+    llm = create_llm()
+    prompt = make_prompt(projetos, user_question)
+    resposta = llm.invoke(prompt)
+    st.markdown(f"**Resposta:** {resposta}")
