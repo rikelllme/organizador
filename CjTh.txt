@@ -1,11 +1,11 @@
 import streamlit as st
 from api_client import get_projetos
-from chatbot import responder_pergunta
+from chatbot import create_llm, make_prompt
 
 st.set_page_config(page_title="Chat de Projetos", layout="wide")
-st.title("💬 Chat de Projetos com LLM")
+st.title("💬 Chat de Projetos com LLM (Streaming)")
 
-# Inicializa histórico na sessão
+# Inicializa histórico
 if "history" not in st.session_state:
     st.session_state.history = []
 
@@ -17,18 +17,28 @@ if "dados_api" not in st.session_state:
 with st.expander("📄 Dados carregados da API"):
     st.json(st.session_state.dados_api)
 
-# Entrada do usuário
-user_input = st.text_input("Digite sua pergunta:")
-
-if st.button("Enviar") and user_input.strip():
-    # Gera resposta usando chatbot.py
-    resposta = responder_pergunta(user_input, st.session_state.dados_api)
-
-    # Atualiza histórico
-    st.session_state.history.append({"user": user_input, "bot": resposta})
-
 # Exibe histórico de conversa
 for msg in st.session_state.history:
-    st.markdown(f"**Você:** {msg['user']}")
-    st.markdown(f"**Bot:** {msg['bot']}")
-    st.markdown("---")
+    st.chat_message(msg["role"]).markdown(msg["content"])
+
+# Entrada do usuário
+if prompt := st.chat_input("Digite sua pergunta..."):
+    # Adiciona pergunta ao histórico
+    st.session_state.history.append({"role": "user", "content": prompt})
+    st.chat_message("user").markdown(prompt)
+
+    # Cria LLM e prompt
+    llm = create_llm()
+    contexto = make_prompt(st.session_state.dados_api, prompt)
+
+    # Cria bolha de resposta vazia
+    message_placeholder = st.chat_message("assistant")
+    resposta_texto = ""
+
+    # Streaming da resposta
+    for token in llm.stream(contexto):
+        resposta_texto += token
+        message_placeholder.markdown(resposta_texto)
+
+    # Salva no histórico
+    st.session_state.history.append({"role": "assistant", "content": resposta_texto})
