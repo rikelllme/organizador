@@ -1,0 +1,89 @@
+from langchain_community.llms import Ollama
+from langchain.prompts import ChatPromptTemplate
+from langchain.memory import ConversationBufferMemory
+import requests
+import json
+
+# === CONFIGURAÇÕES ===
+API_URL = "http://localhost:8000/projetos"  # troque pela URL real da sua API FastAPI
+MODEL_NAME = "qwen2:4b"  # modelo no Ollama
+OLLAMA_URL = "http://localhost:11434"
+
+# Documentação adaptada para sua API
+API_DOC = """
+A API retorna uma lista de registros no formato:
+[
+  {
+    "id": número identificador do registro,
+    "overallStatus": status geral do projeto,
+    "modelCategory": categoria do modelo (ex: smartphone, tablet),
+    "plmDevModelName": nome do modelo no sistema PLM,
+    "marketModelName": nome do modelo para o mercado,
+    "laPia": data do evento LA PIA (AAAA-MM-DD),
+    "laPra": data do evento LA PRA (AAAA-MM-DD),
+    "laSra": data do evento LA SRA (AAAA-MM-DD),
+    "laPsa": data do evento LA PSA (AAAA-MM-DD),
+    "bbModelName": nome do modelo Backbone relacionado,
+    "osversion": versão do sistema operacional
+  }
+]
+"""
+
+# Função para buscar dados da API
+def carregar_dados_api():
+    try:
+        resp = requests.get(API_URL, timeout=5)
+        resp.raise_for_status()
+        return resp.json()
+    except Exception as e:
+        print(f"❌ Erro ao buscar API: {e}")
+        return []
+
+# === Inicializa LLM com memória ===
+llm = Ollama(
+    model=MODEL_NAME,
+    temperature=0,
+    base_url=OLLAMA_URL
+)
+
+memory = ConversationBufferMemory(memory_key="history", return_messages=True)
+
+# Template de prompt
+prompt_template = ChatPromptTemplate.from_messages([
+    ("system", """
+Você é um assistente que responde perguntas sobre registros desta API.
+Responda SOMENTE com base nos dados abaixo.
+Se não encontrar a informação, diga: "Não encontrei essa informação."
+Sempre que possível, responda de forma estruturada, em listas ou tabelas.
+
+Documentação:
+{api_doc}
+
+Dados:
+{dados_api}
+    """),
+    ("human", "{input}")
+])
+
+# Carrega dados da API uma única vez
+dados_api = carregar_dados_api()
+dados_json = json.dumps(dados_api, ensure_ascii=False, indent=2)
+
+# Loop de chat
+print("💬 Chat iniciado! Digite sua pergunta ou 'sair' para encerrar.\n")
+while True:
+    pergunta = input("Você: ")
+    if pergunta.lower() in ["sair", "exit", "quit"]:
+        break
+
+    # Monta prompt com contexto e pergunta
+    prompt_msg = prompt_template.format(
+        api_doc=API_DOC,
+        dados_api=dados_json,
+        input=pergunta
+    )
+
+    print("IA:", end=" ", flush=True)
+    for token in llm.stream(str(prompt_msg)):
+        print(token, end="", flush=True)
+    print("\n")
