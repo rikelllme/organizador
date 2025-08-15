@@ -1,0 +1,126 @@
+# Importações necessárias
+from langchain_community.llms import Ollama
+from langchain.prompts import ChatPromptTemplate
+from langchain.memory import ConversationBufferMemory
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnablePassthrough
+
+# NOVAS importações para a estratégia RAG
+from langchain_community.vectorstores import FAISS
+from langchain_community.embeddings import OllamaEmbeddings
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+
+import requests
+import json
+
+# === CONFIGURAÇÕES ===
+API_URL = "http://localhost:8000/projetos"
+MODEL_NAME = "qwen2:4b" 
+OLLAMA_URL = "http://localhost:11434"
+
+# Função para buscar dados da API (sem alterações)
+def carregar_dados_api():
+    """Carrega os dados da API com tratamento de erros."""
+    try:
+        resp = requests.get(API_URL, timeout=10)
+        resp.raise_for_status()
+        return resp.json()
+    except requests.exceptions.RequestException as e:
+        print(f"❌ Erro ao buscar dados da API: {e}")
+        return []
+
+# === ETAPA 1: INDEXAÇÃO (O "LER PRIMEIRO") ===
+
+print("🔄 Carregando dados da API...")
+dados_api = carregar_dados_api()
+
+# Se os dados foram carregados com sucesso, criamos o Vector Store
+if dados_api:
+    print("✅ Dados carregados. Iniciando a indexação para busca rápida...")
+    
+    # Converte cada objeto JSON em uma string para ser processada
+    documentos_texto = [json.dumps(item, ensure_ascii=False) for item in dados_api]
+    
+    # 1. Splitter: Quebra os textos em pedaços menores se necessário (bom para textos longos)
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=0)
+    docs_split = text_splitter.create_documents(documentos_texto)
+
+    # 2. Embeddings: Modelo que transforma texto em vetores numéricos
+    embeddings = OllamaEmbeddings(model=MODEL_NAME, base_url=OLLAMA_URL)
+
+    # 3. Vector Store: Cria o "índice de busca" em memória usando FAISS
+    #    Este processo converte todos os pedaços de documento em vetores e os armazena.
+    vector_store = FAISS.from_documents(docs_split, embeddings)
+
+    # 4. Retriever: Objeto que sabe como buscar informações no Vector Store
+    retriever = vector_store.as_retriever(search_kwargs={"k": 3}) # Pega os 3 resultados mais relevantes
+    
+    print("✅ Indexação completa! O assistente está pronto.")
+else:
+    print("❌ Não foi possível carregar dados da API. Encerrando o programa.")
+    exit()
+
+
+# === ETAPA 2: CONFIGURAÇÃO DA CHAIN DE RESPOSTA ===
+
+# 1. Modelo LLM e Memória (sem alterações)
+llm = Ollama(model=MODEL_NAME, temperature=0, base_url=OLLAMA_URL)
+memory = ConversationBufferMemory(memory_key="history", input_key="input", return_messages=True)
+
+# 2. NOVO Prompt Template
+#    Agora ele não recebe mais o JSON inteiro. Ele recebe uma variável "context"
+#    que conterá apenas os trechos relevantes encontrados pelo retriever.
+prompt_template = ChatPromptTemplate.from_messages([
+    ("system", """
+Você é um assistente especialista em responder perguntas com base em um contexto fornecido.
+Responda à pergunta do usuário SOMENTE com base nas informações abaixo.
+Se a resposta não estiver no contexto, diga: "Não encontrei essa informação nos dados relevantes."
+
+Contexto Relevante:
+{context}
+    """),
+    ("system", "Histórico da conversa anterior:\n{history}"),
+    ("human", "{input}")
+])
+
+# 3. Parser de saída (sem alterações)
+output_parser = StrOutputParser()
+
+# 4. NOVA Chain de execução com RAG
+#    O fluxo agora é mais inteligente:
+#    a. A pergunta do usuário ("input") é passada para o retriever.
+#    b. O retriever busca no Vector Store o contexto relevante.
+#    c. O contexto, a pergunta e o histórico são passados para o prompt.
+#    d. O prompt formatado vai para o LLM, que gera a resposta.
+chain = (
+    {
+        "context": (lambda x: x['input']) | retriever, # Pega o input, busca o contexto
+        "input": RunnablePassthrough(), # Passa o dicionário de entrada inteiro adiante
+        "history": lambda x: memory.load_memory_variables(x).get("history")
+    }
+    | {
+        "context": lambda x: x['context'],
+        "input": lambda x: x['input']['input'], # Extrai a string do input
+        "history": lambda x: x['history']
+    }
+    | prompt_template
+    | llm
+    | output_parser
+)
+
+# === LOOP DE CHAT (praticamente sem alterações) ===
+print("\n💬 Chat iniciado! Digite sua pergunta ou 'sair' para encerrar.")
+while True:
+    pergunta = input("\nVocê: ")
+    if pergunta.lower() in ["sair", "exit", "quit"]:
+        print("👋 Chat encerrado.")
+        break
+
+    print("IA:", end=" ", flush=True)
+    
+    resposta_completa = ""
+    for token in chain.stream({"input": pergunta}):
+        print(token, end="", flush=True)
+        resposta_completa += token
+    
+    memory.save_context({"input": pergunta}, {"output": resposta_completa})
