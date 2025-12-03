@@ -1,0 +1,153 @@
+\documentclass[11pt, a4paper]{article}
+
+% --- UNIVERSAL PREAMBLE BLOCK ---
+% Configurações de página (margens reduzidas para currículo)
+\usepackage[a4paper, top=1.5cm, bottom=1.5cm, left=1.5cm, right=1.5cm]{geometry}
+
+% Pacotes essenciais para XeLaTeX/LuaLaTeX (necessário para o babel-fontspec)
+\usepackage{fontspec}
+
+% Configuração da língua principal (Português)
+\usepackage[portuguese, bidi=basic, provide=*]{babel}
+
+% Provisão das línguas e fonte principal
+\babelprovide[import, onchar=ids fonts]{portuguese}
+\babelprovide[import, onchar=ids fonts]{english} % Mantendo suporte para termos em inglês
+
+% Fonte principal para o documento (Sans Serif para um visual moderno)
+\babelfont{rm}{Noto Sans}
+
+% --- PACOTES ADICIONAIS ---
+\usepackage{titlesec}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{tabularx} % Ainda necessário para as Hard Skills
+
+% Configurações de links
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    urlcolor=blue,
+    citecolor=black
+}
+
+% Espaçamento entre itens de lista
+\setlist{nosep, itemsep=0pt, parsep=0pt, after=\vspace{0pt}}
+
+% Configuração de Títulos: Seções em negrito e com linha
+\titleformat{\section}
+  {\normalfont\large\bfseries\sffamily}{\thesection}{0em}{\rule{\linewidth}{0.8pt}\centerline{#1}\rule{\linewidth}{0.8pt}}
+\titlespacing*{\section}{10pt}{5pt}{3pt}
+
+% Comando para entrada de experiência e projeto
+\newcommand{\cventry}[4]{
+    \vspace{4pt}
+    \sffamily\textbf{#1} | \textit{#2}
+    \hfill \textit{#3} \\
+    \footnotesize #4
+    \vspace{4pt}
+}
+
+\begin{document}
+\pagestyle{empty} % Remove números de página
+
+% =================================================================
+% CABEÇALHO (SIMPLIFICADO PARA RESOLVER PROBLEMAS DE ALINHAMENTO)
+% =================================================================
+\sffamily
+\centering
+\Huge\bfseries ANTONIO RIKELLME SILVA DE ALENCAR \vspace{5pt}
+
+\normalsize
+Manaus - AM \quad | \quad (92) 98123-9172 / (92) 99250-8550 \quad | \quad \href{mailto:rikellmealencar02@gmail.com}{rikellmealencar02@gmail.com} \quad | \quad \href{https://www.linkedin.com/in/antonio-rikellme-alencar}{linkedin.com/in/antonio-rikellme-alencar}
+\rule{\linewidth}{1.2pt}
+\vspace{-8pt} % Ajuste de espaçamento
+
+% =================================================================
+% OBJETIVO
+% =================================================================
+
+\section*{OBJETIVO}
+Desenvolvedor Full-Stack Júnior com Especialização em Inteligência Artificial (LLMs) e Automação de Processos.
+
+% =================================================================
+% RESUMO PROFISSIONAL
+% =================================================================
+
+\section*{RESUMO PROFISSIONAL}
+Estudante de Análise e Desenvolvimento de Sistemas (Conclusão: Dez/2025) com experiência sólida em desenvolvimento \textbf{Full-Stack}. Atuação focada no Backend (Python/FastAPI, Node.js) e Frontend (React.js, Angular, TypeScript). Especialista em soluções de \textbf{Inteligência Artificial e Automação}, com proficiência em \textbf{LLMs (Langchain, Llamalndex, RAG)} e Web Scraping. Domínio de práticas de \textbf{DevOps (Docker, Linux, Jenkins CI/CD)} e gestão de dados (PostgreSQL, MySQL, Power BI). Profissional proativo em ambientes ágeis (Scrum/Kanban).
+
+% =================================================================
+% EXPERIÊNCIA PROFISSIONAL
+% =================================================================
+
+\section*{EXPERIÊNCIA PROFISSIONAL}
+
+\cventry{Sidia Instituto de Ciência e Tecnologia}{Estagiário em Desenvolvimento de Software}{JUN/2024 -- ATUAL}{
+\begin{itemize}
+    \item \textbf{IA \& Automação:} Desenvolvimento de assistente de ChatBot baseado em LLM (RAG) para consulta interna de projetos, \textbf{otimizando o tempo de busca manual}.
+    \item \textbf{DevOps \& CI/CD:} Realizei \textbf{deployments com Docker em ambientes Linux}, garantindo a entrega contínua de automações e ferramentas web.
+    \item \textbf{Data \& BI:} Otimizei o *Data Pipeline* para o time PMO, implementando web scraping e automações que resultaram na integração direta e correta de dados aos dashboards de Power BI.
+    \item \textbf{Full-Stack:} Desenvolvi e gerenciei o DevOps de uma ferramenta web para gestão e registro de projetos (Backend: FastAPI, Frontend: React.js).
+\end{itemize}
+}
+
+\cventry{Master Saúde}{Assistente Administrativo}{OUT/2023 -- JUN/2024}{
+\begin{itemize}
+    \item Responsável pela \textbf{automação de processos} e validação de dados de Saúde Ocupacional, incluindo a criação de ferramentas para eSocial.
+    \item Criação de Dashboards em \textbf{Power BI} para acompanhamento e análise de indicadores.
+\end{itemize}
+}
+
+\cventry{Caloi Norte S.A}{Jovem Aprendiz}{JUN/2022 -- OUT/2023}{
+\begin{itemize}
+    \item Suporte administrativo na Medicina do Trabalho.
+\end{itemize}
+}
+
+% =================================================================
+% PROJETOS DE DESTAQUE
+% =================================================================
+
+\section*{PROJETOS DE DESTAQUE}
+
+\cventry{Chatbot Inteligente para Consulta de Projetos}{LLM e RAG}{}{
+    \textbf{Tecnologias:} LLMs, RAG, Llamalndex, Embeddings. Implementação de arquitetura RAG utilizando o framework Llamalndex para consultar e fornecer respostas precisas a partir de uma base de conhecimento proprietária.
+}
+
+\cventry{Sistema Web de Gerenciamento de Projetos}{Full-Stack com CI/CD}{}{
+    \textbf{Tecnologias:} FastAPI (Python), React.js, Docker, Jenkins (CI/CD). Desenvolvimento Full-Stack, com foco em APIs RESTful robustas e implementação de um pipeline CI/CD (Jenkins) para monitoramento e deploy em ambiente Linux.
+}
+
+\cventry{Sistema Web para Clínica Médica}{Portal de Resultados de Exames}{}{
+    Criação de um sistema seguro e responsivo para disponibilização de resultados de exames a pacientes, garantindo agilidade no acesso à informação e organização interna.
+}
+
+% =================================================================
+% HABILIDADES TÉCNICAS
+% =================================================================
+
+\section*{HABILIDADES TÉCNICAS (HARD SKILLS)}
+
+\begin{tabularx}{\linewidth}{@{} l X @{}}
+    \textbf{Backend \& Linguagens:} & Python (FastAPI, Django, Flask), Node.js, C/C++, C\#, REST APIs, GraphQL, Sequelize, SQLAlchemy. \\
+    \textbf{Frontend:} & React.js, Angular, JavaScript (ES6+), TypeScript, HTML5, CSS3, Design Responsivo, Acessibilidade (WCAG). \\
+    \textbf{DevOps \& Infraestrutura:} & Docker, Linux, Jenkins (CI/CD Pipeline), Git, GitHub. \\
+    \textbf{IA Generativa \& Dados:} & LLMs, Langchain, Llamalndex, RAG Architecture, Power BI, PostgreSQL, MySQL, SQL Server, Pandas, Selenium, BeautifulSoup. \\
+    \textbf{Metodologias \& Ferramentas:} & Scrum, Kanban, Jira, Pacote Office.
+\end{tabularx}
+
+% =================================================================
+% FORMAÇÃO E IDIOMAS
+% =================================================================
+
+\section*{FORMAÇÃO E COMPLEMENTARES}
+
+\textbf{Ensino Superior:} Tecnólogo em Análise e Desenvolvimento de Sistemas - Cursando (Previsão: Dezembro/2025). \\
+\textbf{Idiomas:} Inglês (Leitura técnica e comunicação básica).
+\vspace{4pt}
+
+\textbf{Cursos Complementares:} Cloud Computing (FIAP ON), Business Intelligence (FIAP), Power BI (Hashtag Treinamentos), Gestão de Projetos (CIEE), Ciclo PDCA (CIEE), Design Thinking (CIEE).
+
+\end{document}
+
